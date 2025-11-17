@@ -17,7 +17,6 @@ uint16_t timer_values[4] = {49152, 98304, 0, 16384};
 
 int main(){
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;
-  
 	P1SEL0 &= (uint8_t)(~((1 << 4) | (1 << 1) | (1<<0)));
 	P1SEL1 &= (uint8_t)(~((1 << 4) | (1 << 1) | (1<<0)));
 	P2SEL0 &= (uint8_t)(~((1<<2)| (1<<1)| (1<<0)));
@@ -33,37 +32,32 @@ int main(){
 	P1IFG &= (uint8_t)(~((1<<1)|(1<<4)));
 	P1IE |= (uint8_t)((1<<1)|(1<<4));
 	TA0CTL &= (uint16_t)(~((1<<5)|(1<<4)));
-  TA0CTL &= (uint16_t)(~(1<<0));
+	TA0CTL &= (uint16_t)(~(1<<0));
 	TA0CCR0 = timer_values[0];
 	TA0CTL |= (uint16_t)((1<<1));
 	TA0CTL |= (uint16_t)((1<<9)|(1<<6));
-  TA0CTL |= (uint16_t)((1<<4));
-  NVIC_SetPriority(PORT1_IRQn, 2);
-  NVIC_EnableIRQ(PORT1_IRQn);
-  NVIC_ClearPendingIRQ(PORT1_IRQn);
-  __ASM("CPSIE I");
-  NVIC_SetPriority(TA0_N_IRQn, 2);
-  NVIC_EnableIRQ(TA0_N_IRQn);
-  NVIC_ClearPendingIRQ(TA0_N_IRQn);
-  while(1){
-		if(active == 1){
-		  if(led == RED_LED){
-        	P1->OUT ^= (uint8_t)(1<<0);
-		} else {
-			P2->OUT &= ~overflow;
-			state++;
-			state &= overflow;
-			P2->OUT |= state;
-	}
-		active = 0;
-}
-}
+	TA0CTL |= (uint16_t)((1<<4));
+  	NVIC_SetPriority(PORT1_IRQn, 2);
+  	NVIC_EnableIRQ(PORT1_IRQn);
+  	NVIC_ClearPendingIRQ(PORT1_IRQn);
+  	__ASM("CPSIE I");
+  	NVIC_SetPriority(TA0_N_IRQn, 2);
+  	NVIC_EnableIRQ(TA0_N_IRQn);
+  	NVIC_ClearPendingIRQ(TA0_N_IRQn);
+  	while(1){}
 	return 0;
 }
 
 void TA0_N_IRQHandler(void){
 	TA0CTL &= ~(uint16_t)((1<<0));
-	active = 1;
+	if(led == RED_LED){
+		P1->OUT ^= (uint8_t)(1<<0);
+	} else {
+		P2->OUT &= ~overflow;
+		state++;
+		state &= overflow;
+		P2->OUT |= state;
+	}
 }
 
 void PORT1_IRQHandler(void){
