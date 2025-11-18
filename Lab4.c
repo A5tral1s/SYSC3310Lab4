@@ -11,9 +11,8 @@ static uint8_t state = LED_OFF;
 static int led = RED_LED;
 static int index = 0;
 static int active = 0;
-static uint16_t time = 0;
 static uint8_t overflow = ((1<<0)|(1<<1)|(1<<2));
-uint16_t timer_values[4] = {49152, 98304, 0, 16384};
+uint16_t timer_values[4] = {24576, 49152, 0, 8192};
 
 int main(){
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;
@@ -35,7 +34,7 @@ int main(){
 	TA0CTL &= (uint16_t)(~(1<<0));
 	TA0CCR0 = timer_values[0];
 	TA0CTL |= (uint16_t)((1<<1));
-	TA0CTL |= (uint16_t)((1<<9)|(1<<6));
+	TA0CTL |= (uint16_t)((1<<8)|(1<<6));
 	TA0CTL |= (uint16_t)((1<<4));
   	NVIC_SetPriority(PORT1_IRQn, 2);
   	NVIC_EnableIRQ(PORT1_IRQn);
@@ -50,6 +49,7 @@ int main(){
 
 void TA0_N_IRQHandler(void){
 	TA0CTL &= ~(uint16_t)((1<<0));
+	if(active == 1){
 	if(led == RED_LED){
 		P1->OUT ^= (uint8_t)(1<<0);
 	} else {
@@ -58,23 +58,25 @@ void TA0_N_IRQHandler(void){
 		state &= overflow;
 		P2->OUT |= state;
 	}
+	}
 }
 
 void PORT1_IRQHandler(void){
+	active = 0;
+	TAOCCR0 = 0;
 	static int DELAY_VAL;
 	DELAY_VAL = 5000;
 	while(DELAY_VAL > 0){DELAY_VAL--;}
 	if((P1IFG & (uint8_t)(1<<4)) != 0){
-    P1IFG &= ~(uint8_t)(1<<4);
+		P1IFG &= ~(uint8_t)(1<<4);
 		index++;
 		index = index%4;
-		if(index != 2){
-			TA0CCR0 = (uint16_t)(timer_values[index]);
-			TA0CTL |= (uint16_t)(1<<4);
+		if(index == 2){
+			P2->OUT &= ~(uint8_t)((1<<0)|(1<<1)|(1<<2));
+			P1->OUT &= ~(uint8_t)(1<<0);
 		} else{
-			  TA0CCR0 = 0;
-			  P2->OUT &= ~(uint8_t)((1<<0)|(1<<1)|(1<<2));
-		    P1->OUT &= ~(uint8_t)(1<<0);
+			TA0CTL |= (uint16_t)(1<<4);
+			active = 1;
 		}
 	}
   if((P1IFG & (uint8_t)(1<<1)) != 0){
@@ -87,5 +89,7 @@ void PORT1_IRQHandler(void){
 				led = RED_LED;
 				break;
 	}
+	  active = 1;
 }
+	TA0CCR0 = (uint16_t)(timer_values[index]);
 	}
