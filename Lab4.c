@@ -43,6 +43,8 @@ int main(){
   	NVIC_SetPriority(TA0_N_IRQn, 2);
   	NVIC_EnableIRQ(TA0_N_IRQn);
   	NVIC_ClearPendingIRQ(TA0_N_IRQn);
+
+	
   	while(1){}
 	return 0;
 }
@@ -50,14 +52,14 @@ int main(){
 void TA0_N_IRQHandler(void){
 	TA0CTL &= ~(uint16_t)((1<<0));
 	if(active == 1){
-	if(led == RED_LED){
-		P1->OUT ^= (uint8_t)(1<<0);
-	} else {
-		P2->OUT &= ~overflow;
-		state++;
-		state &= overflow;
-		P2->OUT |= state;
-	}
+		if(led == RED_LED){
+			P1->OUT ^= (uint8_t)(1<<0);
+		} else {
+			P2->OUT &= ~overflow;
+			state++;
+			state &= overflow;
+			P2->OUT |= state;
+		}
 	}
 }
 
@@ -79,7 +81,7 @@ void PORT1_IRQHandler(void){
 			active = 1;
 		}
 	}
-  if((P1IFG & (uint8_t)(1<<1)) != 0){
+	if((P1IFG & (uint8_t)(1<<1)) != 0){
 		P1IFG &= ~(uint8_t)(1<<1);
 		switch(led){
 			case RED_LED:
@@ -88,8 +90,8 @@ void PORT1_IRQHandler(void){
 			case RGB_LED:
 				led = RED_LED;
 				break;
+		}
+		active = 1;
 	}
-	  active = 1;
+	TA0CCR0 = timer_values[index];
 }
-	TA0CCR0 = (uint16_t)(timer_values[index]);
-	}
